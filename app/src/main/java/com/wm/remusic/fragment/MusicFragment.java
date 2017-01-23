@@ -338,7 +338,7 @@ public class MusicFragment extends BaseFragment {
                 //// TODO: 2016/1/20
                 if (playMusic != null)
                     handler.removeCallbacks(playMusic);
-                if (getAdapterPosition() > 0) {
+                if (getAdapterPosition() >= 0) {
                     playMusic = new PlayMusic(0);
                     handler.postDelayed(playMusic, 70);
                 }
@@ -418,7 +418,7 @@ public class MusicFragment extends BaseFragment {
         }
 
         class PlayMusic implements Runnable {
-            int position;
+            int position = 0;
 
             public PlayMusic(int position) {
                 this.position = position;
@@ -435,7 +435,7 @@ public class MusicFragment extends BaseFragment {
                     info.albumData = MusicUtils.getAlbumArtUri(info.albumId) + "";
                     infos.put(list[i], mList.get(i));
                 }
-                if (position > 0)
+                if (position >= 0)
                     MusicPlayer.playAll(infos, list, position, false);
             }
         }
