@@ -3,6 +3,7 @@ package com.wm.remusic.fragment;
 
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,6 +14,7 @@ import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
@@ -21,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,6 +67,7 @@ public class PlaylistDetailFragment extends Fragment {
     private CollapsingToolbarLayout collapsingToolbarLayout;
     private AppBarLayout appBarLayout;
     private Context context;
+    private static final String TAG = "PlaylistDetailFragment";
     //接受广播
     private BroadcastReceiver mStatusListener = new BroadcastReceiver() {
         @Override
@@ -76,6 +80,15 @@ public class PlaylistDetailFragment extends Fragment {
             } else if (action.equals(IConstants.MUSIC_COUNT_CHANGED)) {
                 refreshPlaylist();
                 reloadAdapter();
+            } else if (action.equals(IConstants.MUSIC_COUNT_REMOVE_MUSIC)) {
+                long id = intent.getLongExtra(IConstants.MUSIC_COUNT_REMOVE_MUSIC,-1);
+                Log.i(TAG, "liTest:onReceive: id="+id);
+                if (id != -1) {
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    context.getContentResolver().delete(uri, null, null);
+                    PlaylistsManager.getInstance(context).deleteMusic(context, id);
+                    context.sendBroadcast(new Intent(IConstants.MUSIC_COUNT_CHANGED));
+                }
             }
         }
     };
@@ -217,6 +230,7 @@ public class PlaylistDetailFragment extends Fragment {
         IntentFilter f = new IntentFilter();
         f.addAction(IConstants.MUSIC_COUNT_CHANGED);
         f.addAction(IConstants.PLAYLIST_ITEM_MOVED);
+        f.addAction(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
         f.addAction(MediaService.META_CHANGED);
         getActivity().registerReceiver(mStatusListener, f);
     }

@@ -61,6 +61,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.RemoteViews;
 
 import com.facebook.common.executors.CallerThreadExecutor;
@@ -91,6 +92,7 @@ import com.wm.remusic.proxy.utils.MediaPlayerProxy;
 import com.wm.remusic.receiver.MediaButtonIntentReceiver;
 import com.wm.remusic.recent.SongPlayCount;
 import com.wm.remusic.uitl.CommonUtils;
+import com.wm.remusic.uitl.IConstants;
 import com.wm.remusic.uitl.ImageUtils;
 import com.wm.remusic.uitl.L;
 import com.wm.remusic.uitl.PreferencesUtility;
@@ -263,6 +265,7 @@ public class MediaService extends Service {
     private long lastSeekPos = 0;
     private RequestPlayUrl mRequestUrl;
     private RequestLrc mRequestLrc;
+    private int mMediaButtonType = 0;
 
     private Thread lrcThread = new Thread(new Runnable() {
         @Override
@@ -426,6 +429,65 @@ public class MediaService extends Service {
     private void setUpMediaSession() {
         mSession = new MediaSession(this, "Remusic");
         mSession.setCallback(new MediaSession.Callback() {
+            Boolean realPlay = true;
+            Runnable playRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    pause();
+                    mPausedByTransientLossOfFocus = false;
+                    synchronized (realPlay) {
+                        realPlay = true;
+                    }
+                }
+            };
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+                Log.i(TAG, "liTest:onMediaButtonEvent: "+mediaButtonIntent.getAction()+",type="+mMediaButtonType+",session=null?"+(mSession == null));
+                Log.i(TAG, "liTest:onMediaButtonEvent: path="+getPath());
+                if (mMediaButtonType == 1) {
+                    if (mSession != null
+                            && Intent.ACTION_MEDIA_BUTTON.equals(mediaButtonIntent.getAction())) {
+                        KeyEvent ke = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                        Log.i(TAG, "liTest:onMediaButtonEvent: ke.action=" + (ke == null ? 0 : ke.getAction()));
+                        if (ke != null && ke.getAction() == KeyEvent.ACTION_DOWN) {
+                            PlaybackState state = mSession.getController().getPlaybackState();
+                            long validActions = state == null ? 0 : state.getActions();
+                            Log.i(TAG, "liTest:onMediaButtonEvent:keycode= " + ke.getKeyCode() + ",state=" + validActions);
+                            switch (ke.getKeyCode()) {
+                                case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                                case KeyEvent.KEYCODE_MEDIA_PLAY:
+                                    if ((validActions & PlaybackState.ACTION_PAUSE) != 0 && (validActions & PlaybackState.ACTION_PLAY) != 0 && isPlaying()) {
+                                        synchronized (realPlay) {
+                                            if (realPlay) {
+                                                realPlay = false;
+                                                mPlayerHandler.postDelayed(playRunnable,3000);
+                                            } else {
+                                                realPlay = true;
+                                                mPlayerHandler.removeCallbacks(playRunnable);
+                                                long id = getAudioId();
+                                                String filePath = getPath();
+                                                gotoNext(true);
+                                                Intent intent = new Intent(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
+                                                Log.i(TAG, "liTest:onMediaButtonEvent: send broadcast:"+id);
+                                                intent.putExtra(IConstants.MUSIC_COUNT_REMOVE_MUSIC,id);
+                                                intent.putExtra(IConstants.FILENAME,filePath);
+                                                sendBroadcast(intent);
+//                                                PlaylistsManager.getInstance(MainApplication.context).deleteMusic(MainApplication.context, id);
+//                                                MainApplication.context.sendBroadcast(new Intent(IConstants.MUSIC_COUNT_CHANGED));
+
+                                            }
+                                        }
+                                        Log.i(TAG, "liTest:onMediaButtonEvent: audio sessionId="+getAudioSessionId()+",cardId="+getCardId()+",audioId="+getAudioId()+",mCardId="+getmCardId());
+                                        return true;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                return super.onMediaButtonEvent(mediaButtonIntent);
+            }
+
             @Override
             public void onPause() {
                 pause();
@@ -460,7 +522,7 @@ public class MediaService extends Service {
                 releaseServiceUiAndStop();
             }
         });
-        mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS|MediaSession.FLAG_HANDLES_MEDIA_BUTTONS);
     }
 
 
@@ -3343,6 +3405,10 @@ public class MediaService extends Service {
             mService.get().timing(time);
         }
 
+        @Override
+        public void setMediaButtonMode(int type) throws RemoteException {
+            mService.get().setMediaButtonMode(type);
+        }
 
     }
 
@@ -3371,6 +3437,8 @@ public class MediaService extends Service {
             refresh();
         }
     }
-
+    public void setMediaButtonMode(int type) {
+        this.mMediaButtonType = type;
+    }
 
 }

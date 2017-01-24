@@ -845,5 +845,10 @@ public class MusicPlayer {
         }
     }
 
+    public static void setMediaButtonMode(int type) {
+        try {
+            mService.setMediaButtonMode(type);
+        } catch (Exception e) {}
+    }
 
 }

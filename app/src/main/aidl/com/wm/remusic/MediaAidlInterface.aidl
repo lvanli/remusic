@@ -56,5 +56,6 @@ interface MediaAidlInterface
     void setLockscreenAlbumArt(boolean enabled);
     void exit();
     void timing(int time);
+    void setMediaButtonMode(int type);
 }
 

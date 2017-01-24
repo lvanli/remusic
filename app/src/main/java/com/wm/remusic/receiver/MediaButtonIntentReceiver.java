@@ -138,6 +138,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     @Override
     public void onReceive(final Context context, final Intent intent) {
         final String intentAction = intent.getAction();
+        Log.d(TAG, "liTest:onReceive: intentAction="+intentAction);
         if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intentAction)) {
             if (true)
                 startService(context, MediaService.CMDPAUSE);
@@ -150,7 +151,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
             final int keycode = event.getKeyCode();
             final int action = event.getAction();
             final long eventtime = event.getEventTime();
-
+            Log.i(TAG, "liTest:onReceive: key="+keycode+",action="+action+",time="+event);
             String command = null;
             switch (keycode) {
                 case KeyEvent.KEYCODE_MEDIA_STOP:

@@ -2,24 +2,30 @@ package com.wm.remusic.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.wm.remusic.MediaAidlInterface;
 import com.wm.remusic.R;
 import com.wm.remusic.fragment.QuickControlsFragment;
+import com.wm.remusic.provider.PlaylistsManager;
 import com.wm.remusic.service.MediaService;
 import com.wm.remusic.service.MusicPlayer;
 import com.wm.remusic.uitl.IConstants;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
@@ -165,6 +171,7 @@ public class BaseActivity extends AppCompatActivity implements ServiceConnection
         f.addAction(MediaService.LRC_UPDATED);
         f.addAction(IConstants.PLAYLIST_COUNT_CHANGED);
         f.addAction(MediaService.MUSIC_LODING);
+        f.addAction(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
         registerReceiver(mPlaybackStatus, new IntentFilter(f));
         showQuickControl(true);
     }
@@ -259,8 +266,22 @@ public class BaseActivity extends AppCompatActivity implements ServiceConnection
                     baseActivity.updateTrack();
                 } else if (action.equals(MediaService.LRC_UPDATED)) {
                     baseActivity.updateLrc();
+                } else if (action.equals(IConstants.MUSIC_COUNT_REMOVE_MUSIC)) {
+                    long id = intent.getLongExtra(IConstants.MUSIC_COUNT_REMOVE_MUSIC,-1);
+                    String fileName = intent.getStringExtra(IConstants.FILENAME);
+                    Log.i("BaseActivity", "liTest:onReceive: id="+id);
+                    if (id != -1) {
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                        context.getContentResolver().delete(uri, null, null);
+                        PlaylistsManager.getInstance(context).deleteMusic(context, id);
+                        context.sendBroadcast(new Intent(IConstants.MUSIC_COUNT_CHANGED));
+                        if (!TextUtils.isEmpty(fileName)) {
+                            File file = new File(fileName);
+                            File bakeFile = new File(fileName + ".music");
+                            file.renameTo(bakeFile);
+                        }
+                    }
                 }
-
             }
         }
     }

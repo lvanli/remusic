@@ -2,16 +2,25 @@ package com.wm.remusic.activity;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -178,13 +187,62 @@ public class MainActivity extends BaseActivity implements CardPickerDialog.Click
                         unbindService();
                         finish();
                         drawerLayout.closeDrawers();
-
+                        break;
+                    case 6:
+                        MusicPlayer.setMediaButtonMode(1);
+                        drawerLayout.closeDrawers();
+                        break;
+                    case 7:
+                        scanSdCard();
+                        drawerLayout.closeDrawers();
+                        break;
                 }
             }
         });
     }
-
-
+    private ScanSdReceiver scanSdReceiver;
+    private void scanSdCard(){
+        IntentFilter intentfilter = new IntentFilter(Intent.ACTION_MEDIA_SCANNER_STARTED);
+        intentfilter.addAction(Intent.ACTION_MEDIA_SCANNER_FINISHED);
+        intentfilter.addDataScheme("file");
+        scanSdReceiver = new ScanSdReceiver();
+        registerReceiver(scanSdReceiver, intentfilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + Environment.getExternalStorageDirectory().getAbsolutePath())));
+        } else {
+            sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory().getAbsolutePath())));
+        }
+    }
+    public class ScanSdReceiver extends BroadcastReceiver {
+        private AlertDialog.Builder builder = null;
+        private AlertDialog ad = null;
+        private int count1;
+        private int count2;
+        private int count;
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(Intent.ACTION_MEDIA_SCANNER_STARTED.equals(action)){
+                Cursor c1 = context.getContentResolver() .query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME }, null, null, null);
+                count1 = c1.getCount();
+                Log.i("MainActivity", "liTest:onReceive: count="+count);
+                builder = new AlertDialog.Builder(context);
+                builder.setMessage("正在扫描存储卡...");
+                ad = builder.create();
+                ad.show();
+            } else if(Intent.ACTION_MEDIA_SCANNER_FINISHED.equals(action)){
+                Cursor c2 = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DURATION, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME }, null, null, null);
+                count2 = c2.getCount();
+                count = count2-count1;
+                ad.cancel();
+                if(count>=0){
+                    Toast.makeText(context, "共增加"+ count + "首歌曲", Toast.LENGTH_LONG).show();
+                } else{
+                    Toast.makeText(context, "共减少"+ count + "首歌曲", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
     private void switchTabs(int position) {
         for (int i = 0; i < tabs.size(); i++) {
             if (position == i) {
