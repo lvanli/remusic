@@ -19,6 +19,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 
 public final class PreferencesUtility {
 
@@ -41,6 +42,7 @@ public final class PreferencesUtility {
     private static final String FAVRIATE_MUSIC_PLAYLIST = "favirate_music_playlist";
     private static final String DOWNMUSIC_BIT = "down_music_bit";
     private static final String CURRENT_DATE = "currentdate";
+    private static final String SCAN_PATH = "scanPath";
 
     private static PreferencesUtility sInstance;
 
@@ -300,5 +302,17 @@ public final class PreferencesUtility {
 
     public int getFilterTime() {
         return mPreferences.getInt("filtertime", 60 * 1000);
+    }
+
+    public String getScanPath() {
+        return mPreferences.getString(SCAN_PATH, "");
+    }
+
+    public void setScanPath(String path) {
+        if (path != null) {
+            final SharedPreferences.Editor editor = mPreferences.edit();
+            editor.putString(SCAN_PATH, path);
+            editor.apply();
+        }
     }
 }

@@ -683,7 +683,7 @@ public class PlaylistActivity extends BaseActivity implements ObservableScrollVi
                             list[i] = info.songId;
                             infos.put(list[i], info);
                         }
-                        if (getAdapterPosition() > 0)
+                        if (getAdapterPosition() >= 0)
                             MusicPlayer.playAll(infos, list, 0, false);
                     }
                 }, 70);

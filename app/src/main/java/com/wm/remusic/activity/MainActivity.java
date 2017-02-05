@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -29,22 +30,28 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bilibili.magicasakura.utils.ThemeUtils;
 import com.wm.remusic.R;
 import com.wm.remusic.adapter.MenuItemAdapter;
+import com.wm.remusic.dialog.AddNetPlaylistDialog;
 import com.wm.remusic.dialog.CardPickerDialog;
 import com.wm.remusic.fragment.BitSetFragment;
 import com.wm.remusic.fragment.MainFragment;
 import com.wm.remusic.fragment.TimingFragment;
 import com.wm.remusic.fragmentnet.TabNetPagerFragment;
 import com.wm.remusic.handler.HandlerUtil;
+import com.wm.remusic.info.MusicInfo;
 import com.wm.remusic.service.MusicPlayer;
+import com.wm.remusic.uitl.PreferencesUtility;
 import com.wm.remusic.uitl.ThemeHelper;
 import com.wm.remusic.widget.CustomViewPager;
+import com.wm.remusic.widget.LvMenuItem;
 import com.wm.remusic.widget.SplashScreen;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,7 +155,7 @@ public class MainActivity extends BaseActivity implements CardPickerDialog.Click
             }
         });
     }
-
+    private int mMediaButtonMode = 0;
 
     private void setUpDrawer() {
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -189,17 +196,75 @@ public class MainActivity extends BaseActivity implements CardPickerDialog.Click
                         drawerLayout.closeDrawers();
                         break;
                     case 6:
-                        MusicPlayer.setMediaButtonMode(1);
+                        mMediaButtonMode = 1 - mMediaButtonMode;
+                        MusicPlayer.setMediaButtonMode(mMediaButtonMode);
+                        if (mMediaButtonMode == 1)
+                            ((TextView)view).setText("普通模式");
+                        else
+                            ((TextView)view).setText("挑选模式");
                         drawerLayout.closeDrawers();
                         break;
                     case 7:
                         scanSdCard();
                         drawerLayout.closeDrawers();
                         break;
+                    case 8:
+                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                        intent.setType("*/*");//设置类型，我这里是任意类型，任意后缀的可以这样写。
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        startActivityForResult(intent,1);
+                        break;
                 }
             }
         });
     }
+    private static final String TAG = "liTest";
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == Activity.RESULT_OK) {//是否选择，没选择就不会继续
+            Log.d(TAG, "onActivityResult: "+requestCode);
+            if(requestCode == 1) {
+                try {
+                    Uri uri = data.getData();//得到uri，后面就是将uri转化成file的过程。
+                    Log.d(TAG, "onActivityResult: " + uri.getPath());
+                    File file = new File(uri.getPath());
+                    Log.d(TAG, "onActivityResult: " + file.getParent());
+                    PreferencesUtility mPreferences = PreferencesUtility.getInstance(this);
+                    mPreferences.setScanPath(file.getParent());
+
+//                    Toast.makeText(MainActivity.this, file.toString(), Toast.LENGTH_SHORT).show();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            PreferencesUtility mPreferences = PreferencesUtility.getInstance(this);
+            mPreferences.setScanPath("");
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+//    public void scanSDFiles(String path) {
+//        try{
+//            File root = new File(path);
+//            File files[] = root.listFiles();
+//            ArrayList<MusicInfo> musicList = new ArrayList<MusicInfo>();
+//            if (files != null) {
+//                for (File f : files) {
+//                    if (f.isFile() && f.getName().endsWith("mp3")) {
+//                        MusicInfo info = new MusicInfo();
+//                        info.
+//                        musicList.add(adapterMusicInfo);
+//                    }
+//                }
+//            }
+//            AddNetPlaylistDialog.newInstance(musicList).show(getSupportFragmentManager(), "add");
+//            drawerLayout.closeDrawers();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     private ScanSdReceiver scanSdReceiver;
     private void scanSdCard(){
         IntentFilter intentfilter = new IntentFilter(Intent.ACTION_MEDIA_SCANNER_STARTED);

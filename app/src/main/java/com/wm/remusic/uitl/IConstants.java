@@ -24,6 +24,7 @@ public interface IConstants {
 
     String MUSIC_COUNT_CHANGED = "com.wm.remusic.musiccountchanged";
     String MUSIC_COUNT_REMOVE_MUSIC = "com.wm.remusic.musicremoved";
+    String MUSIC_COUNT_LOVE_MUSIC = "com.wm.remusic.musicloved";
     String PLAYLIST_ITEM_MOVED = "com.wm.remusic.mmoved";
     String PLAYLIST_COUNT_CHANGED = "com.wm.remusic.playlistcountchanged";
     String CHANGE_THEME = "com.wm.remusic.themechange";

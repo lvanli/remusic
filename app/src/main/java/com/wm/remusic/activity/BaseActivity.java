@@ -172,6 +172,7 @@ public class BaseActivity extends AppCompatActivity implements ServiceConnection
         f.addAction(IConstants.PLAYLIST_COUNT_CHANGED);
         f.addAction(MediaService.MUSIC_LODING);
         f.addAction(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
+        f.addAction(IConstants.MUSIC_COUNT_LOVE_MUSIC);
         registerReceiver(mPlaybackStatus, new IntentFilter(f));
         showQuickControl(true);
     }
@@ -279,6 +280,24 @@ public class BaseActivity extends AppCompatActivity implements ServiceConnection
                             File file = new File(fileName);
                             File bakeFile = new File(fileName + ".music");
                             file.renameTo(bakeFile);
+                        }
+                    }
+                } else if (action.equals(IConstants.MUSIC_COUNT_LOVE_MUSIC)) {
+                    long id = intent.getLongExtra(IConstants.MUSIC_COUNT_LOVE_MUSIC,-1);
+                    String fileName = intent.getStringExtra(IConstants.FILENAME);
+                    Log.i("BaseActivity", "liTest:onReceive: id="+id);
+                    if (id != -1) {
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                        context.getContentResolver().delete(uri, null, null);
+                        PlaylistsManager.getInstance(context).deleteMusic(context, id);
+                        context.sendBroadcast(new Intent(IConstants.MUSIC_COUNT_CHANGED));
+                        if (!TextUtils.isEmpty(fileName)) {
+                            File file = new File(fileName);
+                            File loveDir = new File(file.getParentFile().getPath() + "/love");
+                            if (!loveDir.exists())
+                                loveDir.mkdir();
+                            File loveFile = new File(loveDir,file.getName());
+                            file.renameTo(loveFile);
                         }
                     }
                 }

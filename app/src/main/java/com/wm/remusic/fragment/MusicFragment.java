@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +38,7 @@ import com.wm.remusic.widget.SideBar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * Created by wm on 2016/1/19.
@@ -123,8 +126,11 @@ public class MusicFragment extends BaseFragment {
     }
 
 
-    //刷新列表
     public void reloadAdapter() {
+        reloadAdapter(false);
+    }
+    //刷新列表
+    public void reloadAdapter(final boolean random) {
         if (mAdapter == null) {
             return;
         }
@@ -140,6 +146,28 @@ public class MusicFragment extends BaseFragment {
                     for (int i = 0; i < songList.size(); i++) {
                         if (positionMap.get(songList.get(i).sort) == null)
                             positionMap.put(songList.get(i).sort, i);
+                    }
+                }
+                if (random) {
+                    ArrayList<MusicInfo> newArrayList = new ArrayList<MusicInfo>(songList.size());
+                    Random random = new Random(SystemClock.elapsedRealtime());
+                    int temp;
+                    while (songList.size() > 0) {
+                        temp = random.nextInt(songList.size());
+                        newArrayList.add(songList.get(temp));
+                        songList.remove(temp);
+                    }
+                    mAdapter.updateDataSet(newArrayList);
+                    return null;
+                }
+                String path = mPreferences.getScanPath();
+                Log.i("liTest", "doInBackground: path="+path);
+                if (!TextUtils.isEmpty(path)) {
+                    for (int i=songList.size()-1;i>=0;i--) {
+                        if (!songList.get(i).folder.contains(path)) {
+                            Log.i("liTest", "doInBackground: folder="+songList.get(i).folder);
+                            songList.remove(i);
+                        }
                     }
                 }
                 mAdapter.updateDataSet(songList);
@@ -202,6 +230,9 @@ public class MusicFragment extends BaseFragment {
             case R.id.menu_sort_by_album:
                 mPreferences.setSongSortOrder(SortOrder.SongSortOrder.SONG_ALBUM);
                 reloadAdapter();
+                return true;
+            case R.id.menu_sort_by_random:
+                reloadAdapter(true);
                 return true;
 
         }

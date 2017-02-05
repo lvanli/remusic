@@ -38,7 +38,8 @@ public class MenuItemAdapter extends BaseAdapter {
                     new LvMenuItem(R.mipmap.topmenu_icn_vip, "下载歌曲品质"),
                     new LvMenuItem(R.mipmap.topmenu_icn_exit, "退出"),
                     new LvMenuItem(R.mipmap.topmenu_icn_night, "挑选模式"),
-                    new LvMenuItem(R.mipmap.topmenu_icn_night, "更新本地音乐")
+                    new LvMenuItem(R.mipmap.topmenu_icn_night, "更新本地音乐"),
+                    new LvMenuItem(R.mipmap.topmenu_icn_night, "扫描文件夹")
             ));
 
 

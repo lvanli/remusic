@@ -47,6 +47,7 @@
     <string name="sort_order_entry_dateadded">按添加时间排序</string>
     <string name="sort_order_entry_album">按专辑排序</string>
     <string name="sort_order_entry_artist">按歌手排序</string>
+    <string name="sort_order_random">打乱列表</string>
     <string name="sort_order_entry_number_of_songs">按歌曲数量排序</string>
 
     <string name="confirm">ok</string>

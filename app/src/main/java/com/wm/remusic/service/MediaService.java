@@ -430,6 +430,7 @@ public class MediaService extends Service {
         mSession = new MediaSession(this, "Remusic");
         mSession.setCallback(new MediaSession.Callback() {
             Boolean realPlay = true;
+            Boolean realPause = true;
             Runnable playRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -437,6 +438,15 @@ public class MediaService extends Service {
                     mPausedByTransientLossOfFocus = false;
                     synchronized (realPlay) {
                         realPlay = true;
+                    }
+                }
+            };
+            Runnable pauseRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    play();
+                    synchronized (realPause) {
+                        realPause = true;
                     }
                 }
             };
@@ -456,29 +466,48 @@ public class MediaService extends Service {
                             switch (ke.getKeyCode()) {
                                 case KeyEvent.KEYCODE_MEDIA_PAUSE:
                                 case KeyEvent.KEYCODE_MEDIA_PLAY:
-                                    if ((validActions & PlaybackState.ACTION_PAUSE) != 0 && (validActions & PlaybackState.ACTION_PLAY) != 0 && isPlaying()) {
-                                        synchronized (realPlay) {
-                                            if (realPlay) {
-                                                realPlay = false;
-                                                mPlayerHandler.postDelayed(playRunnable,3000);
-                                            } else {
-                                                realPlay = true;
-                                                mPlayerHandler.removeCallbacks(playRunnable);
-                                                long id = getAudioId();
-                                                String filePath = getPath();
-                                                gotoNext(true);
-                                                Intent intent = new Intent(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
-                                                Log.i(TAG, "liTest:onMediaButtonEvent: send broadcast:"+id);
-                                                intent.putExtra(IConstants.MUSIC_COUNT_REMOVE_MUSIC,id);
-                                                intent.putExtra(IConstants.FILENAME,filePath);
-                                                sendBroadcast(intent);
-//                                                PlaylistsManager.getInstance(MainApplication.context).deleteMusic(MainApplication.context, id);
-//                                                MainApplication.context.sendBroadcast(new Intent(IConstants.MUSIC_COUNT_CHANGED));
-
+                                    if ((validActions & PlaybackState.ACTION_PAUSE) != 0 && (validActions & PlaybackState.ACTION_PLAY) != 0) {
+                                        if (isPlaying()) {
+                                            synchronized (realPlay) {
+                                                if (realPlay) {
+                                                    realPlay = false;
+                                                    mPlayerHandler.postDelayed(playRunnable, 3000);
+                                                } else {
+                                                    realPlay = true;
+                                                    mPlayerHandler.removeCallbacks(playRunnable);
+                                                    long id = getAudioId();
+                                                    String filePath = getPath();
+                                                    gotoNext(true);
+                                                    Intent intent = new Intent(IConstants.MUSIC_COUNT_REMOVE_MUSIC);
+                                                    Log.i(TAG, "liTest:onMediaButtonEvent: send remove broadcast:" + id);
+                                                    intent.putExtra(IConstants.MUSIC_COUNT_REMOVE_MUSIC, id);
+                                                    intent.putExtra(IConstants.FILENAME, filePath);
+                                                    sendBroadcast(intent);
+                                                }
                                             }
+                                            Log.i(TAG, "liTest:onMediaButtonEvent: audio sessionId=" + getAudioSessionId() + ",cardId=" + getCardId() + ",audioId=" + getAudioId() + ",mCardId=" + getmCardId());
+                                            return true;
+                                        } else {
+                                            synchronized (realPause) {
+                                                if (realPause) {
+                                                    realPause = false;
+                                                    mPlayerHandler.postDelayed(playRunnable,3000);
+                                                } else {
+                                                    realPause = true;
+                                                    mPlayerHandler.removeCallbacks(playRunnable);
+                                                    long id = getAudioId();
+                                                    String filePath =  getPath();
+                                                    gotoNext(true);
+                                                    Intent intent = new Intent(IConstants.MUSIC_COUNT_LOVE_MUSIC);
+                                                    Log.i(TAG, "liTest:onMediaButtonEvent: send love broadcast:" + id);
+                                                    intent.putExtra(IConstants.MUSIC_COUNT_LOVE_MUSIC, id);
+                                                    intent.putExtra(IConstants.FILENAME, filePath);
+                                                    sendBroadcast(intent);
+
+                                                }
+                                            }
+                                            return true;
                                         }
-                                        Log.i(TAG, "liTest:onMediaButtonEvent: audio sessionId="+getAudioSessionId()+",cardId="+getCardId()+",audioId="+getAudioId()+",mCardId="+getmCardId());
-                                        return true;
                                     }
                                     break;
                             }
