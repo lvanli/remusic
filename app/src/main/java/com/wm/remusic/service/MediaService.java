@@ -491,10 +491,10 @@ public class MediaService extends Service {
                                             synchronized (realPause) {
                                                 if (realPause) {
                                                     realPause = false;
-                                                    mPlayerHandler.postDelayed(playRunnable,3000);
+                                                    mPlayerHandler.postDelayed(pauseRunnable,3000);
                                                 } else {
                                                     realPause = true;
-                                                    mPlayerHandler.removeCallbacks(playRunnable);
+                                                    mPlayerHandler.removeCallbacks(pauseRunnable);
                                                     long id = getAudioId();
                                                     String filePath =  getPath();
                                                     gotoNext(true);

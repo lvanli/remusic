@@ -94,6 +94,11 @@ public class MainActivity extends BaseActivity implements CardPickerDialog.Click
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MusicPlayer.setMediaButtonMode(mMediaButtonMode);
+    }
 
     private void setToolBar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
