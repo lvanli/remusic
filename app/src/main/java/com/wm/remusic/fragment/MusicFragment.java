@@ -164,7 +164,7 @@ public class MusicFragment extends BaseFragment {
                 Log.i("liTest", "doInBackground: path="+path);
                 if (!TextUtils.isEmpty(path)) {
                     for (int i=songList.size()-1;i>=0;i--) {
-                        if (!songList.get(i).folder.contains(path)) {
+                        if (!songList.get(i).folder.contains(path) || songList.get(i).folder.endsWith("love")) {
                             Log.i("liTest", "doInBackground: folder="+songList.get(i).folder);
                             songList.remove(i);
                         }
